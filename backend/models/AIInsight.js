@@ -18,6 +18,7 @@ const aiInsightSchema = new mongoose.Schema(
         "recovery",
         "chat",
         "morning",
+        "admin_report",
       ],
       required: true,
     },

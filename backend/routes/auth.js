@@ -3,6 +3,7 @@ import express from "express";
 import {
   register,
   login,
+  adminLogin,
   me,
   updateProfile,
 } from "../controllers/authController.js";
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/admin-login", adminLogin);
 router.get("/me", protect, me);
 router.put("/profile", protect, updateProfile);
 

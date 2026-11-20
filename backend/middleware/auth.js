@@ -28,6 +28,12 @@ export const protect = async (req, res, next) => {
       });
     }
 
+    if (user.status === "inactive") {
+      return res.status(403).json({
+        message: "Account has been deactivated. Please contact an administrator.",
+      });
+    }
+
     req.user = user;
     next();
   } catch (err) {
@@ -35,4 +41,22 @@ export const protect = async (req, res, next) => {
       message: "Not authorized, token invalid",
     });
   }
+};
+
+export const requireAdmin = (req, res, next) => {
+  const authorizedEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+
+  if (
+    req.user &&
+    req.user.role === "admin" &&
+    req.user.status === "active" &&
+    authorizedEmail &&
+    req.user.email?.trim().toLowerCase() === authorizedEmail
+  ) {
+    return next();
+  }
+
+  return res.status(403).json({
+    message: "Access denied. Only the authorized administrator can access this resource.",
+  });
 };

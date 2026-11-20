@@ -76,6 +76,73 @@ export const login = async (req, res) => {
       });
     }
 
+    if (user.status === "inactive") {
+      return res.status(403).json({
+        message: "Account has been deactivated. Please contact an administrator.",
+      });
+    }
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = signToken(user._id);
+
+    res.json({
+      user,
+      token,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+export const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password required",
+      });
+    }
+
+    const authorizedEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Enforce single admin email: Reject every email except ADMIN_EMAIL
+    if (!authorizedEmail || cleanEmail !== authorizedEmail) {
+      return res.status(403).json({
+        message: "Access denied. Only the authorized platform administrator is permitted.",
+      });
+    }
+
+    const user = await User.findOne({
+      email: cleanEmail,
+    });
+
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        message: "Access denied. Administrator privileges required.",
+      });
+    }
+
+    if (user.status !== "active") {
+      return res.status(403).json({
+        message: "Administrator account is inactive.",
+      });
+    }
+
+    user.lastLogin = new Date();
+    await user.save();
+
     const token = signToken(user._id);
 
     res.json({
